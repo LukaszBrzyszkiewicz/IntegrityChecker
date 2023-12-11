@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # ==== BUILT-IN librariers of Python
-import os, sys, stat
+import os, sys, signal
 
 # ==== EXTERNAL librariers installed by PyPI
 import trio
 import xxhash
 
 # ==== INTERNAL librariers
+from intlib.common    import SIGINT_handler
 from intlib.args      import IChkArgumentParser
 from intlib.traverser import IChkGlobTraverser
 from intlib.hash      import IChkFileHash, IChkFileHashProgress
@@ -37,4 +38,9 @@ if __name__ == '__main__':
         exit(128)
     arguments.args.lock_file = arguments.args.lock_file or arguments.args.immutable
 
+    handler  = SIGINT_handler()
+    signal.signal(signal.SIGINT, handler.signal_handler)
+
     trio.run(main)
+
+    if handler.SIGINT: exit(130)

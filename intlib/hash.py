@@ -21,7 +21,7 @@ from rich.padding import Padding
 
 # ==== INTERNAL librariers
 from .fattr import IChkFileAttributes
-from .common import HumanBytes
+from .common import HumanBytes, SIGINT_handler
 
 #############################################################################################################
 ###### Internal class for providing file hashing progress bar
@@ -249,6 +249,9 @@ class IChkFileHash():
 
             totalRead     = 0
             while bytesRead != None and bytesRead > 0:
+                if SIGINT_handler().SIGINT: 
+                    return (None, None, None, None)
+                
                 totalRead += bytesRead
 
                 calcStartTime = time.time()
@@ -346,6 +349,8 @@ class IChkFileHash():
         #### Second HASH calculation
         if doCalc:
             fileXXH128, fileBps, readBps, hashBps = await self.calculateXXH128(fileName)
+            if fileXXH128 is None:
+                return
 
             if not self.arg.get_xattr:
                 self.printNewHash(fileName, fileXXH128, fileOSHASH, readBps, hashBps)
@@ -372,7 +377,7 @@ class IChkFileHash():
         while not abort:
             try:
                 fileName = queue.get_nowait()
-                if fileName == "**END**":
+                if fileName == "**END**" or SIGINT_handler().SIGINT:
                     abort = True
                 else:
                     self.fileNo += 1

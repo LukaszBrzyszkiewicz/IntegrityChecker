@@ -1,5 +1,30 @@
 # ==== BUILT-IN librariers of Python
+import sys
 from typing import List, Union
+
+
+###################################################################################################################################
+###### Singleton meta-class helper
+###################################################################################################################################
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+#############################################################################################################
+###### Ctrl+C graceful handler
+#############################################################################################################
+class SIGINT_handler(metaclass=Singleton):
+
+    def __init__(self):
+        self.SIGINT = False
+
+    def signal_handler(self, signal, frame):
+        print('Aborting! Pressed Ctrl+C.', file=sys.stderr)
+        self.SIGINT = True
 
 #############################################################################################################
 ###### Internal class for providing human readable bytes convertion

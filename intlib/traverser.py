@@ -5,6 +5,9 @@ from queue import Queue
 # ==== EXTERNAL librariers installed by PyPI
 import trio
 
+# ==== INTERNAL librariers
+from intlib.common    import SIGINT_handler
+
 #############################################################################################################
 ###### Internal class for providing access to files/directory traversing
 #############################################################################################################
@@ -32,6 +35,9 @@ class IChkGlobTraverser():
                 iglob = [inputPattern]
 
             for iglobFile in iglob:
+                if SIGINT_handler().SIGINT: 
+                    return
+
                 if os.path.isfile(iglobFile):
                     if iglobFile not in self.filesList:
                         self.filesList.add(iglobFile)
@@ -58,8 +64,11 @@ class IChkGlobTraverser():
                 self.queue.put("**END**")
                 return
 
-        await trio.to_thread.run_sync(self.__traverse, inputList, recursive)
-        await trio.to_thread.run_sync(self.__traverse, self.retraverseList, recursive)
+        if not SIGINT_handler().SIGINT: 
+            await trio.to_thread.run_sync(self.__traverse, inputList, recursive)
+
+        if not SIGINT_handler().SIGINT: 
+            await trio.to_thread.run_sync(self.__traverse, self.retraverseList, recursive)
 
         self.queue.put("**END**")
         self.retraverseList = None
