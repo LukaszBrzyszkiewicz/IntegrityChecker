@@ -16,6 +16,23 @@ class IChkArgumentParser():
 
     # .................................................................
 
+    def parse_jobs(self, args):
+        if args.job_scan:
+            args.progress  = True
+            args.calculate = True
+            args.set_xattr = True
+            args.lock_file = True
+
+        elif args.job_iscan:
+            args.progress  = True
+            args.calculate = True
+            args.set_xattr = True
+            args.immutable = True
+
+        return args
+
+    # .................................................................
+
     def parse(self, args):
         argParser = ArgumentParser()
         argParser.add_argument('inputFiles', type=str, nargs='*', default=sys.stdin, help="Input files list - if empty, provide list thru stdin", metavar='filename')
@@ -33,23 +50,28 @@ class IChkArgumentParser():
         argParser.add_argument('-H', '--no-header', action='store_true', help="Don't print header")
         argParser.add_argument('-E', '--no-ellipsis', action='store_true', help="Don't shrink file path and name to fit in terminal window. This is automatically enabled for non color output.")
         argParser.add_argument('-p', '--progress', action='store_true', help="Show progress bar")
-        argParser.add_argument('--color',        dest='color_always', action='store_true', help='when to use terminal colours (=always, =auto, =never)')
+        argParser.add_argument('--color',        dest='color_always', action='store_true', help='when to use terminal colours (none | =always, =auto [default], =never)')
         argParser.add_argument('--color=always', dest='color_always', action='store_true', help=SUPPRESS)
         argParser.add_argument('--color=auto',   dest='color_auto',   action='store_true', help=SUPPRESS)
         argParser.add_argument('--color=never',  dest='color_never',  action='store_true', help=SUPPRESS)
 
         argParser.add_argument('-V', '--version', action='store_true', help="Print version and exit")
 
+        argGroups = argParser.add_argument_group("Predefined jobs")
+        argGroup  = argGroups.add_mutually_exclusive_group(required=False)
+        argGroup.add_argument('--scan', dest='job_scan', action='store_true', help='set of arguments equal to "--progress --calculate --set-xattr --lock-file"')
+        argGroup.add_argument('--iscan', dest='job_iscan', action='store_true', help='set of arguments equal to "--progress --calculate --set-xattr --immutable"')        
+
 # TODO: Arguments to add and support
-# --scan
-# --verify
 # --fast
 
 # TODO: Set cronicle support
 # TODO: Set file copy support (?)
 # TODO: Set compare support
 
-        return argParser.parse_args(args)
+        args = argParser.parse_args(args)
+        args = self.parse_jobs(args)
+        return args
 
     # .................................................................
 
