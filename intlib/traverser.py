@@ -16,9 +16,6 @@ class IChkGlobTraverser():
     def __init__(self, progress=None) -> None:
         self.dirsList   = set([])
         self.filesList  = set([])
-        self.filesCount = 0
-        self.totalSize  = 0
-
         self.queue      = Queue()
         self.p          = progress
 
@@ -43,11 +40,7 @@ class IChkGlobTraverser():
                         self.filesList.add(iglobFile)
                         self.queue.put(iglobFile)
 
-                        self.filesCount += 1
-                        self.totalSize += os.path.getsize(iglobFile)
-
-                        if self.p:
-                            self.p.updateTotalInfo(self.totalSize)
+                        if self.p: self.p.advanceTotalSize(os.path.getsize(iglobFile))
 
                 elif os.path.isdir(iglobFile) and recursive:
                     if iglobFile not in self.dirsList:

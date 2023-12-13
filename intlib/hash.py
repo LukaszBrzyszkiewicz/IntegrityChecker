@@ -38,6 +38,8 @@ class IChkFileHashProgress():
         self.taskTotal  = None
         self.taskNow    = None
 
+        self.total      = 0
+
     def __enter__(self):
         if self.enabled:
             self.layout = self.generateLayout()
@@ -48,7 +50,10 @@ class IChkFileHashProgress():
     def __exit__(self, exception_type, exception_value, exception_traceback):
         if self.layout:
             self.layout.stop()
-            self.layout = None
+            
+            self.layout  = None
+            self.total   = 0
+            self.history = []
 
     # .................................................................
 
@@ -74,16 +79,16 @@ class IChkFileHashProgress():
         layout = Live(Padding(self.progress, (1, 0)), transient=False, refresh_per_second=30)
         self.taskTotal = self.progress.add_task(
                             f"[bright_yellow]TOTAL", filename="",
-                            total=None, start=True, visible=True
-                        )
+                            total=None, start=True, visible=True)
 
         return layout
     
     # .................................................................
     
-    def updateTotalInfo(self, newTotal):
+    def advanceTotalSize(self, totalAdvance):
         if self.progress:
-            self.progress.update(self.taskTotal, total=newTotal)
+            self.total += totalAdvance
+            self.progress.update(self.taskTotal, total=self.total)
 
     def progressNewFile(self, fileName, fileSize):
         if self.progress:
@@ -92,8 +97,7 @@ class IChkFileHashProgress():
 
             self.taskNow = self.progress.add_task(
                 f"[dark_goldenrod]XXH128", filename=formatFileName(fileName, self.txtcols),
-                total=fileSize, start=True, visible=True
-            )
+                total=fileSize, start=True, visible=True)
                         
             if len(self.history) > self.maxHistory:
                 taskToRemove = self.history.pop(0)
@@ -343,6 +347,8 @@ class IChkFileHash():
                 # --lock-file => lock file after setting extended attributes
                 if self.arg.lock_file:
                     fileAttr.lockFile()
+        elif self.p:
+            self.p.advanceTotalSize(-fileAttr.fileSize)
 
         # print(f'Time: {time.time() - calcStartTime}')
 
