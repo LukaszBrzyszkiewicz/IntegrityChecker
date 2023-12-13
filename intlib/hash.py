@@ -21,7 +21,7 @@ from rich.padding import Padding
 
 # ==== INTERNAL librariers
 from .fattr import IChkFileAttributes
-from .common import HumanBytes, SIGINT_handler
+from .common import HumanBytes, SIGINT_handler, formatFileName
 
 #############################################################################################################
 ###### Internal class for providing file hashing progress bar
@@ -79,27 +79,6 @@ class IChkFileHashProgress():
 
         return layout
     
-    def fileNameEllipsis(self, fileName):
-        minPathLen = 8
-        txtCols    = max(self.txtcols, 12)
-        fileLen  = len(fileName)
-        fileBase = os.path.basename(fileName)
-        filePath = os.path.dirname(fileName) + os.sep
-
-        if fileLen <= txtCols:
-            return fileName
-        
-        if len(filePath) > minPathLen:
-            pathLen = txtCols - len(fileBase) - 2
-            pathLen = max(minPathLen, pathLen)
-            filePath = filePath[:pathLen] + "…" + os.sep
-
-        if len(filePath) + len(fileBase) > txtCols:
-            fileLen  = txtCols - len(filePath) - 1
-            fileBase = "…" + fileBase[-fileLen:]
-
-        return filePath + fileBase
-
     # .................................................................
     
     def updateTotalInfo(self, newTotal):
@@ -112,7 +91,7 @@ class IChkFileHashProgress():
                 self.progressEndFile()
 
             self.taskNow = self.progress.add_task(
-                f"[dark_goldenrod]XXH128", filename=self.fileNameEllipsis(fileName),
+                f"[dark_goldenrod]XXH128", filename=formatFileName(fileName, self.txtcols),
                 total=fileSize, start=True, visible=True
             )
                         
@@ -145,21 +124,19 @@ class IChkFileHash():
         self.p           = progress
         self.colorStdOut = arguments.colorStdOut()
         self.colorStdErr = arguments.colorStdErr()
+        
+        self.txtcols     = os.get_terminal_size().columns - 81
+        if self.arg.no_stats: 
+            self.txtcols += 23
 
         self.printHeader()
 
     # .................................................................
 
-    def coloredFileName(self, fileName):
-        fileDir  = (os.path.dirname(fileName) + os.sep).replace("[", "\[")
-        fileBase = (os.path.basename(fileName)).replace("[", "\[")
-        
-        return f"[magenta]{fileDir}[bright_magenta italic]{fileBase}[/]"
-
     def printStdOut(self, text, fileName=""):
         if self.colorStdOut:
             if fileName:
-                rprint(text + self.coloredFileName(fileName))
+                rprint(text + formatFileName(fileName, self.txtcols, self.arg.no_ellipsis, True))
             else:
                 rprint(text)
         else:

@@ -1,6 +1,33 @@
 # ==== BUILT-IN librariers of Python
-import sys
+import os, sys
 from typing import List, Union
+
+###################################################################################################################################
+###### Helper functions
+###################################################################################################################################
+def formatFileName(fileName, maxLen, noEllipsis=False, colour=False):
+    minPathLen = 8
+    txtCols    = max(maxLen, 12)
+    fileLen    = len(fileName)
+    fileBase   = os.path.basename(fileName)
+    filePath   = os.path.dirname(fileName) + os.sep
+    
+    if not noEllipsis and fileLen > txtCols:  
+        if len(filePath) > minPathLen:
+            pathLen = txtCols - len(fileBase) - 2
+            pathLen = max(minPathLen, pathLen)
+            filePath = filePath[:pathLen] + "…" + os.sep
+
+        if len(filePath) + len(fileBase) > txtCols:
+            fileLen  = txtCols - len(filePath) - 1
+            fileBase = "…" + fileBase[-fileLen:]
+
+    if colour:
+        filePath = filePath.replace("[", "\[")
+        fileBase = fileBase.replace("[", "\[")
+        return f"[magenta]{filePath}[bright_magenta italic]{fileBase}[/]"
+    else:
+        return filePath + fileBase
 
 
 ###################################################################################################################################

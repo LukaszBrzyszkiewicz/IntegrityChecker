@@ -31,6 +31,7 @@ class IChkArgumentParser():
         argParser.add_argument('-q', '--quiet', action='store_true', help="Quiet mode - don't print calculated hashes")
         argParser.add_argument('-Q', '--no-stats', action='store_true', help="Don't print performance data")
         argParser.add_argument('-H', '--no-header', action='store_true', help="Don't print header")
+        argParser.add_argument('-E', '--no-ellipsis', action='store_true', help="Don't shrink file path and name to fit in terminal window. This is automatically enabled for non color output.")
         argParser.add_argument('-p', '--progress', action='store_true', help="Show progress bar")
         argParser.add_argument('--color',        dest='color_always', action='store_true', help='when to use terminal colours (=always, =auto, =never)')
         argParser.add_argument('--color=always', dest='color_always', action='store_true', help=SUPPRESS)
