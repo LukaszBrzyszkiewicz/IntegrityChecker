@@ -44,12 +44,14 @@ class IChkArgumentParser():
         argParser.add_argument('-v', '--verify-xattr', action='store_true', help="Verify calculated checksum with file extended attributes")
         argParser.add_argument('-l', '--lock-file', action='store_true', help="Lock file to read-only. Set also immutable bit if run also as a root user")
         argParser.add_argument('-i', '--immutable', action='store_true', help="Lock file to read-only and immutable. If not run as root it will return error")
+        argParser.add_argument('--rate-limit', type=float, help="Limit read data rate to specified speed in MB/s")
 
         argParser.add_argument('-q', '--quiet', action='store_true', help="Quiet mode - don't print calculated hashes")
         argParser.add_argument('-Q', '--no-stats', action='store_true', help="Don't print performance data")
         argParser.add_argument('-H', '--no-header', action='store_true', help="Don't print header")
         argParser.add_argument('-E', '--no-ellipsis', action='store_true', help="Don't shrink file path and name to fit in terminal window. This is automatically enabled for non color output.")
         argParser.add_argument('-p', '--progress', action='store_true', help="Show progress bar")
+        argParser.add_argument('--cronicle', action='store_true', help="Show progress and status for cronicle/cronicle-edge")
         argParser.add_argument('--color',        dest='color_always', action='store_true', help='when to use terminal colours (none | =always, =auto [default], =never)')
         argParser.add_argument('--color=always', dest='color_always', action='store_true', help=SUPPRESS)
         argParser.add_argument('--color=auto',   dest='color_auto',   action='store_true', help=SUPPRESS)
@@ -65,7 +67,6 @@ class IChkArgumentParser():
 # TODO: Arguments to add and support
 # --fast
 
-# TODO: Set cronicle support
 # TODO: Set file copy support (?)
 # TODO: Set compare support
 

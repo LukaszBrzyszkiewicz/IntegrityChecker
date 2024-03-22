@@ -23,8 +23,8 @@ class IChkGlobTraverser():
 
     def __traverse(self, inputList, recursive):
         self.retraverseList = []
-
-        for inputPattern in inputList:
+        
+        for inputPattern in inputList:            
             inputPattern = inputPattern.strip()
             if not os.path.isfile(inputPattern) and not os.path.isdir(inputPattern):
                 iglob = glob.iglob(inputPattern, recursive=recursive)

@@ -12,10 +12,10 @@ from intlib.args      import IChkArgumentParser
 from intlib.traverser import IChkGlobTraverser
 from intlib.hash      import IChkFileHash, IChkFileHashProgress
 
-ICHK_VER = "0.1.0"
+ICHK_VER = "0.2.0"
 
 async def main():
-    with IChkFileHashProgress(arguments.args.progress) as hashProgress:
+    with IChkFileHashProgress(arguments.args.progress, arguments.args.cronicle) as hashProgress:
         fileTraverse = IChkGlobTraverser(hashProgress)
         fileHasher   = IChkFileHash(arguments, hashProgress)
 
@@ -37,6 +37,9 @@ if __name__ == '__main__':
         print("ERROR: to set also immutable bit for files you need to run this tool as a root user.")
         exit(128)
     arguments.args.lock_file = arguments.args.lock_file or arguments.args.immutable
+
+    if arguments.args.rate_limit:
+        print(f"WARNING: rate limiter enabled to {arguments.args.rate_limit}MB/s\n")
 
     handler  = SIGINT_handler()
     signal.signal(signal.SIGINT, handler.signal_handler)
