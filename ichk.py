@@ -12,7 +12,7 @@ from intlib.args      import IChkArgumentParser
 from intlib.traverser import IChkGlobTraverser
 from intlib.hash      import IChkFileHash, IChkFileHashProgress
 
-ICHK_VER = "0.2.1"
+ICHK_VER = "0.3.0"
 
 async def main():
     with IChkFileHashProgress(arguments.args.progress, arguments.args.cronicle) as hashProgress:
