@@ -183,7 +183,7 @@ class IChkFileHash():
             else:
                 self.printStdOut(f"[bright_white][u]No.[/]  [u]XXH128[/]                           [u]OSHASH[/]           [u]Read speed[/]   [u]Hash speed[/]   [u]File name[/]")
 
-    def printNewHash(self, fileName, fileXX128Hash, fileOSHash, readBps=None, hashBps=None):
+    def printNewHash(self, fileName, fileXX128Hash, fileOSHash, readBps=None, hashBps=None, hashOK=None):
         readSpeedStr = ""
         hashSpeedStr = ""
         if readBps: readSpeedStr = f"{HumanBytes.format(readBps)}/s"
@@ -194,11 +194,21 @@ class IChkFileHash():
                 self.fileNo, fileName, fileXX128Hash, fileOSHash, readSpeedStr, hashSpeedStr
             ]]
 
+        if hashOK == True:
+            hashColor = "bright_green"
+            oshashColor = "green"
+        elif hashOK == False:
+            hashColor = "bright_red"
+            oshashColor = "bright_red"
+        else:
+            hashColor = "bright_yellow"
+            oshashColor = "yellow"
+
         if not self.arg.quiet:
             if self.arg.no_stats:
-                self.printStdOut(f"[bright_cyan]{self.fileNo:<4}[/] [bright_yellow]{fileXX128Hash}[/] [yellow]{fileOSHash}[/] ", fileName)
+                self.printStdOut(f"[bright_cyan]{self.fileNo:<4}[/] [{hashColor}]{fileXX128Hash}[/] [{oshashColor}]{fileOSHash}[/] ", fileName)
             else:
-                self.printStdOut(f"[bright_cyan]{self.fileNo:<4}[/] [bright_yellow]{fileXX128Hash}[/] [yellow]{fileOSHash}[/] {readSpeedStr:<12} {hashSpeedStr:<12} ", fileName)
+                self.printStdOut(f"[bright_cyan]{self.fileNo:<4}[/] [{hashColor}]{fileXX128Hash}[/] [{oshashColor}]{fileOSHash}[/] {readSpeedStr:<12} {hashSpeedStr:<12} ", fileName)
 
     def printErrHash(self, fileName, hashType, fileHash, calcHash):
         print(f"{hashType} {fileHash} != {calcHash} {fileName}", file=sys.stderr)
@@ -350,7 +360,7 @@ class IChkFileHash():
 
         # --verify-xattr => calculate for files with checksum data
         if self.arg.verify_xattr:
-            doCalc = fileAttr.hasChecksumInfo()
+            doCalc = fileAttr.hasChecksumInfo() and fileAttr.hasChecksumOlderThan(self.arg.verify_older_than)
 
         # --calculate => calculate only files without checksum data
         if self.arg.calculate and not fileAttr.hasChecksumInfo():
@@ -376,20 +386,27 @@ class IChkFileHash():
             if fileXXH128 is None:
                 return
 
-            if not self.arg.get_xattr:
-                self.printNewHash(fileName, fileXXH128, fileOSHASH, readBps, hashBps)
-
             # --verify-xattr => print different things
+            hashOK = None
             if self.arg.verify_xattr and fileAttr.hasChecksumInfo():
-                await self.verifyXXH128(fileName, fileAttr, fileXXH128)
+                hashOK = await self.verifyXXH128(fileName, fileAttr, fileXXH128)
+
+            if not self.arg.get_xattr:
+                self.printNewHash(fileName, fileXXH128, fileOSHASH, readBps, hashBps, hashOK)
 
             # --set-xattr => set extended attributes only for files without checksum data
-            if self.arg.set_xattr and not fileAttr.hasChecksumInfo():
+            if self.arg.set_xattr: # and not fileAttr.hasChecksumInfo():
+                fileAttr.unlockFile()
+                # try:
                 fileAttr.writeXAttr(fileXXH128, fileOSHASH)
+                # except:
+                    # pass
 
                 # --lock-file => lock file after setting extended attributes
                 if self.arg.lock_file:
                     fileAttr.lockFile()
+                else:
+                    fileAttr.relockFile()
         elif self.p:
             self.p.advanceTotalSize(-fileAttr.fileSize)
 

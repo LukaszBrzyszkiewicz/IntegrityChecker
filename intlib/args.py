@@ -42,6 +42,7 @@ class IChkArgumentParser():
         argParser.add_argument('-g', '--get-xattr', action='store_true', help="Get 'user.ichk.*' extended attributes for file and print to stdout")
         argParser.add_argument('-s', '--set-xattr', action='store_true', help="Set 'user.ichk.*' extended attributes for file with calculated checksum")
         argParser.add_argument('-v', '--verify-xattr', action='store_true', help="Verify calculated checksum with file extended attributes")
+        argParser.add_argument('--verify-older-than', type=str, help="Verify calculated checksum with files verified more tan specified time (you can use human date repr like '1 day')")
         argParser.add_argument('-l', '--lock-file', action='store_true', help="Lock file to read-only. Set also immutable bit if run also as a root user")
         argParser.add_argument('-i', '--immutable', action='store_true', help="Lock file to read-only and immutable. If not run as root it will return error")
         argParser.add_argument('--rate-limit', type=float, help="Limit read data rate to specified speed in MB/s")
