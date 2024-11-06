@@ -58,6 +58,8 @@ class IChkArgumentParser():
         argParser.add_argument('--color=auto',   dest='color_auto',   action='store_true', help=SUPPRESS)
         argParser.add_argument('--color=never',  dest='color_never',  action='store_true', help=SUPPRESS)
 
+        argParser.add_argument
+
         argParser.add_argument('-V', '--version', action='store_true', help="Print version and exit")
 
         argGroups = argParser.add_argument_group("Predefined jobs")
