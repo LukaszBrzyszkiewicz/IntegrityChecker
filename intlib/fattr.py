@@ -1,10 +1,13 @@
 # ==== BUILT-IN librariers of Python
-import os, fcntl, datetime
+import os, platform, datetime
 from array import array
 from datetime import datetime as dt
 
 # ==== EXTERNAL librariers installed by PyPI
-from xattr import xattr
+if platform.system() != "Windows":
+    from xattr import xattr
+    import fcntl
+
 import dateparser
 
 # ==== Constants
@@ -18,16 +21,21 @@ FS_IMMUTABLE_FL	= 0x010
 class IChkFileAttributes():
 
     def __init__(self, fileName) -> None:
-        self.fileName   = fileName
-        self.fileSize   = os.path.getsize(fileName)
-        self.xattr      = xattr(fileName)
-        self.fileXAttrs = None
+        self.fileName     = fileName
+        self.fileSize     = os.path.getsize(fileName)
+        self.fileXAttrs   = None
         self.wasImmutable = False
+
+        if platform.system() != "Windows":
+            self.xattr  = xattr(fileName)
+        else:
+            self.xattr  = {}
 
     # .................................................................
  
     def readXAttr(self):
         self.fileXAttrs = {}
+
         for xAttrName in self.xattr.keys():
             if xAttrName.startswith("user.ichk."):
                 self.fileXAttrs |= {
@@ -73,6 +81,9 @@ class IChkFileAttributes():
     # .................................................................
 
     def isImmutable(self) -> bool:
+        if platform.system() == "Windows":
+            return False
+        
         with open(self.fileName, 'r') as f:
             arg = array('L', [0])
             fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
@@ -80,6 +91,9 @@ class IChkFileAttributes():
         return bool(arg[0] & FS_IMMUTABLE_FL)
     
     def setImmutable(self):
+        if platform.system() == "Windows":
+            return False
+        
         self.wasImmutable = True
         with open(self.fileName, 'r') as f: 
             arg = array('L', [0])
@@ -89,6 +103,9 @@ class IChkFileAttributes():
             fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
 
     def unsetImmutable(self):
+        if platform.system() == "Windows":
+            return False
+        
         with open(self.fileName, 'r') as f: 
             arg = array('L', [0])
             fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
@@ -96,7 +113,7 @@ class IChkFileAttributes():
             fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
 
     def canSetImmutable(self) -> bool:
-        return os.geteuid() == 0
+        return platform.system() != "Windows" and os.geteuid() == 0
 
     def relockFile(self):
         if self.wasImmutable and self.canSetImmutable():

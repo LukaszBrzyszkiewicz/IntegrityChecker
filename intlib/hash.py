@@ -301,9 +301,9 @@ class IChkFileHash():
         self.p.progressEndFile()
 
         totalTime = time.time() - totalStartTime
-        fileSpeed = totalRead / totalTime
-        readSpeed = totalRead / totalReadTime
-        hashSpeed = totalRead / totalCalcTime
+        fileSpeed = totalRead / (totalTime or 1)
+        readSpeed = totalRead / (totalReadTime or 1)
+        hashSpeed = totalRead / (totalCalcTime or 1)
 
         return (
             xxh128.hexdigest().upper(),
