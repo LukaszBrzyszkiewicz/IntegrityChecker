@@ -25,6 +25,8 @@ def formatFileName(fileName, maxLen, noEllipsis=False, colour=False):
     if colour:
         filePath = filePath.replace("[", "\[")
         fileBase = fileBase.replace("[", "\[")
+        if filePath.endswith("\\"):
+            filePath = filePath + "\\"
         return f"[magenta]{filePath}[bright_magenta italic]{fileBase}[/]"
     else:
         return filePath + fileBase

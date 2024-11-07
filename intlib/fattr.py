@@ -20,11 +20,12 @@ FS_IMMUTABLE_FL	= 0x010
 #############################################################################################################
 class IChkFileAttributes():
 
-    def __init__(self, fileName) -> None:
+    def __init__(self, fileName, dbFile) -> None:
         self.fileName     = fileName
         self.fileSize     = os.path.getsize(fileName)
         self.fileXAttrs   = None
         self.wasImmutable = False
+        self.dbFile       = dbFile
 
         if platform.system() != "Windows":
             self.xattr  = xattr(fileName)
@@ -42,6 +43,16 @@ class IChkFileAttributes():
                     xAttrName.removeprefix("user."): self.xattr[xAttrName].decode()
                 }
 
+        if self.dbFile:
+            if not self.fileXAttrs.get("ichk.fsize"):
+                self.fileXAttrs["ichk.fsize"] = str(self.dbFile.size).encode("ascii")
+            if not self.fileXAttrs.get("ichk.oshash"):
+                self.fileXAttrs["ichk.oshash"] = self.dbFile.oshash
+            if not self.fileXAttrs.get("ichk.xxh128"):
+                self.fileXAttrs["ichk.xxh128"] = self.dbFile.xxhash
+            if not self.fileXAttrs.get("ichk.updated"):
+                self.fileXAttrs["ichk.updated"] = self.dbFile.last_seen.strftime("%Y-%m-%dT%H:%M:%SZ").encode("ascii")
+
         return self.fileXAttrs
     
     def writeXAttr(self, xxh128, oshash):
@@ -49,6 +60,13 @@ class IChkFileAttributes():
         self.xattr["user.ichk.xxh128"] = xxh128.encode("ascii")
         self.xattr["user.ichk.oshash"] = oshash.encode("ascii")
         self.xattr["user.ichk.updated"] = dt.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ").encode("ascii")
+
+        if self.dbFile:
+            self.dbFile.fileXXH128 = xxh128
+            self.dbFile.fileOSHASH = oshash
+            self.dbFile.size = self.fileSize
+            self.dbFile.save()
+
         self.readXAttr()
     
     # .................................................................
@@ -91,26 +109,22 @@ class IChkFileAttributes():
         return bool(arg[0] & FS_IMMUTABLE_FL)
     
     def setImmutable(self):
-        if platform.system() == "Windows":
-            return False
-        
-        self.wasImmutable = True
-        with open(self.fileName, 'r') as f: 
-            arg = array('L', [0])
-            fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
+        if platform.system() != "Windows":
+            self.wasImmutable = True
+            with open(self.fileName, 'r') as f: 
+                arg = array('L', [0])
+                fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
 
-            arg[0] |= FS_IMMUTABLE_FL
-            fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
+                arg[0] |= FS_IMMUTABLE_FL
+                fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
 
     def unsetImmutable(self):
-        if platform.system() == "Windows":
-            return False
-        
-        with open(self.fileName, 'r') as f: 
-            arg = array('L', [0])
-            fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
-            arg[0] &= ~FS_IMMUTABLE_FL
-            fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
+        if platform.system() != "Windows":
+            with open(self.fileName, 'r') as f: 
+                arg = array('L', [0])
+                fcntl.ioctl(f.fileno(), FS_IOC_GETFLAGS, arg, True)
+                arg[0] &= ~FS_IMMUTABLE_FL
+                fcntl.ioctl(f.fileno(), FS_IOC_SETFLAGS, arg, True)
 
     def canSetImmutable(self) -> bool:
         return platform.system() != "Windows" and os.geteuid() == 0

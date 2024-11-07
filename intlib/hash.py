@@ -21,6 +21,7 @@ from rich.padding import Padding
 
 # ==== INTERNAL librariers
 from .fattr import IChkFileAttributes
+from .db import IChkDbFile
 from .common import HumanBytes, SIGINT_handler, formatFileName
 
 #############################################################################################################
@@ -158,7 +159,7 @@ class IChkFileHash():
         self.colorStdErr = arguments.colorStdErr()
         self.rateLimit   = arguments.args.rate_limit
         
-        self.txtcols     = os.get_terminal_size().columns - 81
+        self.txtcols     = os.get_terminal_size().columns - 83
         if self.arg.no_stats: 
             self.txtcols += 23
 
@@ -349,8 +350,11 @@ class IChkFileHash():
     async def calculate(self, fileName):
         calcStartTime = time.time()
 
-        fileAttr  = IChkFileAttributes(fileName)
-        doCalc    = False
+        # get or create file in database
+        fileOSHASH = await self.calculateOSHASH(fileName)        
+        dbFile     = IChkDbFile(fileName, fileOSHASH)
+        fileAttr   = IChkFileAttributes(fileName, dbFile)
+        doCalc     = False
 
         # none argument passed and not quiet also
         if (not self.arg.calculate and 
@@ -374,7 +378,6 @@ class IChkFileHash():
 
         #### First OSHASH calculation
         if doCalc:
-            fileOSHASH = await self.calculateOSHASH(fileName)
             
             # --verify-xattr => print different things
             if self.arg.verify_xattr and fileAttr.hasChecksumInfo():
@@ -385,6 +388,10 @@ class IChkFileHash():
             fileXXH128, fileBps, readBps, hashBps = await self.calculateXXH128(fileName)
             if fileXXH128 is None:
                 return
+            
+            if dbFile:
+                dbFile.xxhash = fileXXH128
+                dbFile.save()
 
             # --verify-xattr => print different things
             hashOK = None

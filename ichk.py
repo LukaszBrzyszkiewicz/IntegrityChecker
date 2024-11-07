@@ -11,6 +11,7 @@ from intlib.common    import SIGINT_handler
 from intlib.args      import IChkArgumentParser
 from intlib.traverser import IChkGlobTraverser
 from intlib.hash      import IChkFileHash, IChkFileHashProgress
+from intlib.db        import IChkDbInit
 
 ICHK_VER = "0.3.0"
 
@@ -25,6 +26,9 @@ async def main():
             
 
 if __name__ == '__main__':
+    handler  = SIGINT_handler()
+    signal.signal(signal.SIGINT, handler.signal_handler)
+
     arguments = IChkArgumentParser(sys.argv[1:])
     if arguments.args.version:
         print(f"ICHK v{ICHK_VER}")
@@ -41,8 +45,9 @@ if __name__ == '__main__':
     if arguments.args.rate_limit:
         print(f"WARNING: rate limiter enabled to {arguments.args.rate_limit}MB/s\n")
 
-    handler  = SIGINT_handler()
-    signal.signal(signal.SIGINT, handler.signal_handler)
+    if arguments.args.db:
+        print(f"Database storage enabled with sotrage name '{arguments.args.db_storage_name}'")
+        IChkDbInit(arguments.args.db, arguments.args.db_storage_name)
 
     trio.run(main)
 

@@ -3,3 +3,4 @@ trio==0.23.1
 xattr==1.0.0; platform_system != "Windows"
 xxhash==3.4.1
 dateparser==1.2.0
+peewee==3.17.1

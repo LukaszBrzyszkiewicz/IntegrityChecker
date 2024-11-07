@@ -1,5 +1,5 @@
 # ==== BUILT-IN librariers of Python
-import sys
+import sys, platform
 from argparse import ArgumentParser, SUPPRESS
 
 
@@ -58,7 +58,8 @@ class IChkArgumentParser():
         argParser.add_argument('--color=auto',   dest='color_auto',   action='store_true', help=SUPPRESS)
         argParser.add_argument('--color=never',  dest='color_never',  action='store_true', help=SUPPRESS)
 
-        argParser.add_argument
+        argParser.add_argument('--db', type=str, help="Database file name where to store hashes")
+        argParser.add_argument('--db-storage-name', type=str, default=platform.node(), help=f"Storage name for database entries (default='{platform.node()}')")
 
         argParser.add_argument('-V', '--version', action='store_true', help="Print version and exit")
 
