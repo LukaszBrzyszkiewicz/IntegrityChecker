@@ -11,6 +11,8 @@ from rich import inspect
 ###################################################################################################################################
 ichkDb   = SqliteDatabase(None)
 ichkDbStorage = None
+pathCacheName = None
+pathCache = None
 
 def IChkDbInit(dbFileName: str, storageName: str, test: bool = False, ro: bool = False):
     if test:
@@ -34,28 +36,37 @@ def IChkDbInit(dbFileName: str, storageName: str, test: bool = False, ro: bool =
             timestamp=datetime.datetime.now()
         )
 
-    inspect(ichkDbStorage)
-
 def IChkDbFile(localFileName: str, oshash: str):
     if not ichkDbStorage:
         return None
     
-    realFileName = os.path.realpath(localFileName)
-    filePathName = os.path.dirname(realFileName)
-    fileNameWoExt = os.path.splitext(os.path.basename(realFileName))[0]
-    fileExtension = os.path.splitext(realFileName)[1].removeprefix('.')
+    try:
+        realFileName = os.path.realpath(localFileName)
+        filePathName = os.path.dirname(realFileName) + os.sep
+        fileNameWoExt = os.path.splitext(os.path.basename(realFileName))[0]
+        fileExtension = os.path.splitext(realFileName)[1].removeprefix('.')
+        fileSize = os.path.getsize(realFileName)
+        fileMTime = datetime.datetime.fromtimestamp(os.path.getmtime(realFileName))
+        fileCTime = datetime.datetime.fromtimestamp(os.path.getctime(realFileName))
+    except Exception as e:
+        print(f"I/O ERROR: {e}")
+        return None
 
-    path = Path.get_or_none(Path.storage_id==ichkDbStorage, Path.storage_path==filePathName)
-    if not path:
-        path = Path.create(
-            storage_id=ichkDbStorage,
-            storage_path=filePathName,
-            timestamp=datetime.datetime.now()
-        )
+    global pathCacheName, pathCache
+    if not pathCacheName or pathCacheName != filePathName:
+        path = Path.get_or_none(Path.storage_id==ichkDbStorage, Path.storage_path==filePathName)
+        if not path:
+            path = Path.create(
+                storage_id=ichkDbStorage,
+                storage_path=filePathName,
+                timestamp=datetime.datetime.now()
+            )
 
-    fileSize = os.path.getsize(realFileName)
-    fileMTime = datetime.datetime.fromtimestamp(os.path.getmtime(realFileName))
-    fileCTime = datetime.datetime.fromtimestamp(os.path.getctime(realFileName))
+        pathCache = path
+        pathCacheName = filePathName
+    else:
+        path = pathCache
+
 
     file = File.get_or_none(
         File.path_id==path, File.file_name==fileNameWoExt, File.file_ext==fileExtension,
